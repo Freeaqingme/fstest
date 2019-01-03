@@ -69,13 +69,18 @@ expect()
 {
 	e="${1}"
 	shift
-	r=`${fstest} $* 2>/dev/null | tail -1`
+	tmp=fstest_$$.err
+	r=`${fstest} $* 2>${tmp} | tail -1`
 	echo "${r}" | egrep '^'${e}'$' >/dev/null 2>&1
 	if [ $? -eq 0 ]; then
 		echo "ok ${ntest}"
 	else
 		echo "not ok ${ntest}"
+		echo "# ${ntest}: expected '${e}', received '${r}'"
+		echo "# ${ntest}: executed '${fstest} '" "$@" "'"
+		awk '{print "# '${ntest}': err: " $0;}' ${tmp}
 	fi
+	rm ${tmp}
 	ntest=`expr $ntest + 1`
 }
 
@@ -101,13 +106,18 @@ test_check()
 		echo "ok ${ntest}"
 	else
 		echo "not ok ${ntest}"
+		echo "# ${ntest}: failed check: '$*'"
 	fi
 	ntest=`expr $ntest + 1`
 }
 
 namegen()
 {
-	echo "fstest_`dd if=/dev/urandom bs=1k count=1 2>/dev/null | md5sum  | cut -f1 -d' '`"
+	if [ ${os} == 'Darwin' ] ; then
+		echo  "fstest_`dd if=/dev/urandom bs=1k count=1 2>/dev/null | md5  | cut -f1 -d' '`"
+	else
+		echo "fstest_`dd if=/dev/urandom bs=1k count=1 2>/dev/null | md5sum  | cut -f1 -d' '`"
+	fi
 }
 
 quick_exit()
@@ -121,7 +131,7 @@ supported()
 {
 	case "${1}" in
 	chflags)
-		if [ ${os} != "FreeBSD" -o ${fs} != "UFS" ]; then
+		if [ '(' ${os} != "FreeBSD"  -a ${os} != "Darwin" ')' -o ${fs} != "UFS" ]; then
 			return 1
 		fi
 		;;
