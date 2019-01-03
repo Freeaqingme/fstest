@@ -548,6 +548,12 @@ main(int argc, char *argv[])
 	char *gids, *endp;
 	int uid, umsk, ch;
 
+	fprintf(stderr, "fstest ");
+	for(int i=1;i<argc-1;i++) {
+		fprintf(stderr, "%s ", argv[i]);
+	}
+	fprintf(stderr, " \n");
+
 	uid = -1;
 	gids = NULL;
 	umsk = 0;
